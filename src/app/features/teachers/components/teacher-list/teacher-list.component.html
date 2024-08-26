@@ -1,0 +1,28 @@
+<smsedu-crud
+  [columns]="columns"
+  [data]="result?.data ?? []"
+  [pagination]="pagination"
+  [loading]="loading"
+  [isToolBar]="true"
+  [isCreate]="true"
+  [isUploadFile]="true"
+  [isSelected]="true"
+  [loading]="loading"
+  title="Danh sách giáo viên"
+  [searchString]="searchClass"
+  [searchText$]="searchText$"
+  (lazyLoad)="onLoadTeachers($event)"
+  [onCreate]="onShowDialogForCreate.bind(this)"
+  [onDeleteCollection]="onDeleteColection.bind(this)"
+  [customActions]="customActions"
+  [exportItem]="exportItem"
+  (selectFile)="onSelect($event)"
+  (uploadFile)="onUpload($event)"
+/>
+
+<smsedu-teacher-dialog-for-create-update (save)="onSave()" />
+
+<smsedu-teacher-diaglog-for-create-collection
+  [excelData]="excelData"
+  (clear)="onClear()"
+/>

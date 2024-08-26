@@ -1,0 +1,117 @@
+<!-- eslint-disable @angular-eslint/template/elements-content -->
+<div class="grid">
+  <div class="col-12">
+    <div class="">
+      <p-toolbar styleClass="mb-4 p-4">
+        <!-- ! Action Buttons: Create, Delete -->
+        <ng-template pTemplate="left">
+          <p-dropdown
+            [options]="teachers"
+            [(ngModel)]="selectTeacher"
+            optionLabel="shortName"
+            placeholder="Chọn lớp"
+            (onChange)="onTeacherChange($event)"
+          />
+        </ng-template>
+
+        <!-- ! Action Buttons: Upload, Export -->
+        <ng-template pTemplate="right">
+          <!-- @ Export File -->
+          <div class="export-wrapper">
+            <p-splitButton
+              label="Xuất file"
+              icon="pi pi-upload"
+              (onClick)="exportItem[0].command.call(this)"
+              [model]="exportItem"
+            />
+          </div>
+        </ng-template>
+      </p-toolbar>
+
+      <div class="timetable-view-container">
+        <table class="timetable-view-morning">
+          <thead>
+            <tr>
+              <th>Tiết</th>
+              <th>Thời gian</th>
+              @for (num of numWeekdays; track $index) {
+                <th>{{ 'Thứ ' + num }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (startAt of startAtsInDay; track $index) {
+              <tr>
+                <th class="cell-weekday">
+                  {{ onHandelStartAt(startAt) }}
+                </th>
+                <th class="cell-startAt">
+                  {{ getTeachingTimeName(onHandelStartAt(startAt)) }}
+                </th>
+                @for (num of numWeekdays; track $index) {
+                  <th
+                    class="cell-dnd"
+                    [ngClass]="
+                      onHandelStartAt(startAt) > 5
+                        ? 'cell-dnd-afternoon'
+                        : 'cell-dnd-morning'
+                    "
+                    (click)="
+                      timetableUnits[num][startAt]?.constraintErrors?.length > 0
+                        ? op.toggle($event)
+                        : null
+                    "
+                  >
+                    <div
+                      [class.constraint-error-0]="
+                        timetableUnits[num][startAt]?.constraintErrors?.length >
+                          0 &&
+                        !isHardConstraint(
+                          timetableUnits[num][startAt]?.constraintErrors
+                        )
+                      "
+                      [class.constraint-error-1]="
+                        timetableUnits[num][startAt]?.constraintErrors?.length >
+                          0 &&
+                        isHardConstraint(
+                          timetableUnits[num][startAt]?.constraintErrors
+                        )
+                      "
+                    >
+                      <div>
+                        {{ getNameAssignment(timetableUnits[num][startAt]) }}
+                      </div>
+
+                      <p-overlayPanel #op>
+                        <div class="flex flex-column gap-3 w-25rem">
+                          <ul>
+                            @for (
+                              error of timetableUnits[num][startAt]
+                                ?.constraintErrors;
+                              track $index
+                            ) {
+                              <li
+                                [class.constraint-error-0]="
+                                  error?.isHardConstraint === false
+                                "
+                                [class.constraint-error-1]="
+                                  error?.isHardConstraint === true
+                                "
+                              >
+                                {{ getStringConstraintError(error) }}
+                              </li>
+                            }
+                          </ul>
+                        </div>
+                      </p-overlayPanel>
+                    </div>
+                  </th>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

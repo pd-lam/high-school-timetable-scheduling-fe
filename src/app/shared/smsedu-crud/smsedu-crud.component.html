@@ -1,0 +1,321 @@
+<!-- eslint-disable @angular-eslint/template/elements-content -->
+<div
+  class="t-wrapper"
+  [ngClass]="{
+    'crud-wrapper-toolbar': isToolBar,
+    'crud-wrapper': !isToolBar
+  }"
+>
+  <div class="col-12">
+    <div
+      class="card"
+      [class.bg-float]="isBgFloat"
+    >
+      <!-- * Tooolbar -->
+      @if (isToolBar) {
+        <p-toolbar styleClass="mb-4">
+          <!-- ! Action Buttons: Create, Delete -->
+          <ng-template pTemplate="left">
+            <div class="my-2">
+              <!-- @ Create -->
+              @if (isCreate) {
+                <button
+                  pButton
+                  pRipple
+                  label="Thêm"
+                  icon="pi pi-plus"
+                  class="p-button-success mr-2"
+                  (click)="onCreate()"
+                ></button>
+              }
+              <!-- @ Delete Colection-->
+              @if (isSelected) {
+                <button
+                  pButton
+                  pRipple
+                  label="Xóa"
+                  icon="pi pi-trash"
+                  class="p-button-danger mr-2"
+                  (click)="onDeleteCollection($event, selected)"
+                  [disabled]="selected.length <= 1"
+                ></button>
+              }
+            </div>
+          </ng-template>
+
+          <ng-template pTemplate="center">
+            <div class="my-2">
+              <ng-content select=".smsedu-toolbar-center"></ng-content>
+            </div>
+          </ng-template>
+
+          <!-- ! Action Buttons: Upload, Export -->
+          <ng-template pTemplate="right">
+            <!-- @ Upload File -->
+            @if (isUploadFile) {
+              <p-fileUpload
+                mode="basic"
+                accept=".xlsx"
+                [maxFileSize]="1000000"
+                chooseLabel="Chọn file"
+                uploadLabel="Xử lý dữ liệu"
+                class="mr-2 inline-block"
+                url="https://www.primefaces.org/cdn/api/upload.php"
+                (onSelect)="onSelectFile($event)"
+                (onUpload)="onUploadFile($event)"
+              ></p-fileUpload>
+            }
+
+            <!-- @ Export File -->
+            @if (exportItem?.length > 0) {
+              <div class="export-wrapper">
+                <p-splitButton
+                  label="Xuất file"
+                  icon="pi pi-upload"
+                  (onClick)="exportItem[0].command.call(this)"
+                  [model]="exportItem"
+                />
+              </div>
+            }
+          </ng-template>
+        </p-toolbar>
+      }
+
+      <!-- * Table data -->
+      <p-table
+        #dt
+        [value]="data ?? []"
+        [columns]="columns"
+        [lazy]="true"
+        [(selection)]="selected"
+        (onLazyLoad)="onLazyLoad($event)"
+        styleClass="p-datatable-gridlines"
+        responsiveLayout="scroll"
+        [paginator]="isPaginator"
+        [rows]="10"
+        [totalRecords]="pagination?.totalCount ?? 0"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Hiển thị từ {first} đến {last} của mục {totalRecords}"
+        [rowsPerPageOptions]="[10, 20, 30]"
+        [resizableColumns]="true"
+        [loading]="loading"
+        selectionMode="multiple"
+        [rowHover]="true"
+        dataKey="id"
+      >
+        >
+        <!-- ! Caption -->
+        <ng-template pTemplate="caption">
+          <div
+            class="flex flex-column md:flex-row md:justify-content-between md:align-items-center gap-2"
+          >
+            <!-- @ Title -->
+            <h5 class="m-0">{{ title }}</h5>
+
+            <!-- @ Search, Action Clear -->
+            <div class="flex gap-2">
+              <ng-content select=".action-caption"></ng-content>
+              <span class="p-input-icon-left">
+                <i class="pi pi-search"></i>
+                <input
+                  pInputText
+                  type="text"
+                  [value]="searchString"
+                  placeholder="Tìm kiếm..."
+                  (keyup)="onSearch(getSearchValue($event))"
+                  class="w-full sm:w-auto"
+                />
+              </span>
+              <button
+                pButton
+                label="Clear"
+                class="p-button-outlined"
+                icon="pi pi-filter-slash"
+                (click)="onclear()"
+              ></button>
+            </div>
+          </div>
+        </ng-template>
+
+        <!-- ! Header -->
+        <ng-template
+          pTemplate="header"
+          let-columns
+        >
+          <tr class="text-center">
+            @if (isSelected) {
+              <th
+                style="width: 3rem"
+                class="text-center"
+              >
+                <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+              </th>
+            }
+            @for (col of columns; track $index) {
+              <th
+                [pSortableColumn]="col.field"
+                class="text-center"
+                [pSortableColumnDisabled]="!col.isSort"
+              >
+                {{ col.header }}
+                @if (col.isSort) {
+                  <p-sortIcon [field]="col.field"></p-sortIcon>
+                }
+                @if (col?.typeEidt) {
+                  <i
+                    class="pi pi-file-edit ml-1"
+                    style="font-size: 1.1rem"
+                  ></i>
+                }
+              </th>
+            }
+            @if (customActions.length > 0) {
+              <th></th>
+            }
+          </tr>
+        </ng-template>
+
+        <!-- ! Body -->
+        <ng-template
+          pTemplate="body"
+          let-rowData
+          let-columns="columns"
+        >
+          <tr [ngClass]="{ 'p-highlight': selected.includes(rowData) }">
+            @if (isSelected) {
+              <td class="text-center">
+                <p-tableCheckbox [value]="rowData"></p-tableCheckbox>
+              </td>
+            }
+            @for (col of columns; track $index) {
+              <!-- ! Edit Cell -->
+              @if (col?.typeEidt) {
+                @if (col?.typeEidt !== 'checkbox') {
+                  <td
+                    [class]="'text-center ' + col.class"
+                    [style]="styleWitdth + col.style"
+                    [pEditableColumn]="rowData[col.field]"
+                    [pEditableColumnField]="col.field"
+                  >
+                    <p-cellEditor>
+                      <ng-template pTemplate="input">
+                        @if (col?.typeEidt === 'autocomplete') {
+                          <smsedu-auto-complete
+                            [(selectedItem)]="rowData[col.field]"
+                            [currentItem]="rowData"
+                            [suggestions]="cusAutoCompleteColumn.suggestions"
+                            [loadData]="cusAutoCompleteColumn.loadData"
+                            [onSearch]="cusAutoCompleteColumn.onSearch"
+                            [onDropdownClick]="
+                              cusAutoCompleteColumn.onDropdownClick
+                            "
+                            [onSelect]="cusAutoCompleteColumn.onSelect"
+                          />
+                        } @else if (col?.typeEidt === 'multiSelect') {
+                          <p-multiSelect
+                            [options]="col?.options?.data"
+                            (onChange)="
+                              !!col?.options?.onChange
+                                ? col?.options?.onChange($event, rowData)
+                                : null
+                            "
+                            [(ngModel)]="rowData[col.field]"
+                            optionLabel="name"
+                            appendTo="body"
+                            scrollHeight="250px"
+                          />
+                        } @else if (col?.typeEidt === 'inputNumber') {
+                          <p-inputNumber
+                            [(ngModel)]="rowData[col.field]"
+                            inputId="minmax"
+                            mode="decimal"
+                            [min]="0"
+                            [max]="15"
+                            [showButtons]="true"
+                            buttonLayout="horizontal"
+                            decrementButtonClass="p-button-danger"
+                            incrementButtonClass="p-button-success"
+                            incrementButtonIcon="pi pi-plus"
+                            decrementButtonIcon="pi pi-minus"
+                          />
+                        } @else {
+                          <input
+                            pInputText
+                            type="text"
+                            [(ngModel)]="rowData[col.field]"
+                          />
+                        }
+                      </ng-template>
+                      <ng-template pTemplate="output">
+                        {{ getDataCell(rowData, col) }}
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
+                } @else {
+                  <td
+                    [class]="'text-center ' + col.class"
+                    [style]="styleWitdth + col.style"
+                  >
+                    <p-checkbox
+                      [(ngModel)]="rowData[col.field]"
+                      [binary]="true"
+                      inputId="binary"
+                    />
+                  </td>
+                }
+              } @else {
+                <td
+                  [class]="'text-center ' + col.class"
+                  [style]="styleWitdth + col.style"
+                >
+                  <span class="p-column-title">{{ col.header }}</span>
+                  <div
+                    class="flex align-items-center gap-2"
+                    [ngClass]="{
+                      'justify-content-between': col?.isAction,
+                      'justify-content-center': !col?.isAction
+                    }"
+                  >
+                    {{ getDataCell(rowData, col) }}
+                    @if (col?.isAction) {
+                      <button
+                        pButton
+                        pRipple
+                        icon="pi pi-file-edit"
+                        class="p-button-rounded p-button-outline p-button-secondary"
+                        (click)="
+                          col?.isAction && col?.onAction($event, rowData)
+                        "
+                      ></button>
+                    }
+                  </div>
+                </td>
+              }
+            }
+            <!-- ! Action Buttons: Edit, Delete -->
+            @if (customActions.length > 0) {
+              <td class="text-justify">
+                <div
+                  class="flex align-items-center justify-content-center gap-2"
+                >
+                  <!-- @ More Actions -->
+                  @if (customActions.length > 0) {
+                    @for (action of customActions; track $index) {
+                      <button
+                        pButton
+                        pRipple
+                        [icon]="action.icon"
+                        class="p-button-rounded p-button-{{ action.color }}"
+                        (click)="action.onClick($event, rowData)"
+                      ></button>
+                    }
+                  }
+                </div>
+              </td>
+            }
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,28 @@
+<!-- eslint-disable @angular-eslint/template/elements-content -->
+<smsedu-crud
+  [columns]="columns"
+  [data]="result?.data ?? []"
+  [pagination]="pagination"
+  [loading]="loading"
+  [isToolBar]="true"
+  [isCreate]="true"
+  [isUploadFile]="true"
+  [isSelected]="true"
+  title="Danh sách môn học"
+  [searchString]="searchClass"
+  [searchText$]="searchText$"
+  [onCreate]="onShowDialogForCreate.bind(this)"
+  [customActions]="customActions"
+  (lazyLoad)="onLoadClasses($event)"
+  [onDeleteCollection]="onDeleteClasses.bind(this)"
+  [exportItem]="exportItem"
+  (selectFile)="onSelect($event)"
+  (uploadFile)="onUpload($event)"
+/>
+
+<smsedu-subject-dialog-for-create-update (save)="onSave()" />
+
+<smsedu-subject-diaglog-for-create-collection
+  [excelData]="excelData"
+  (clear)="onClear()"
+/>

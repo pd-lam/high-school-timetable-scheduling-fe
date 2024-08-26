@@ -1,0 +1,47 @@
+<!-- eslint-disable @angular-eslint/template/elements-content -->
+<smsedu-crud
+  [columns]="columns"
+  [data]="data"
+  [pagination]="pagination"
+  [loading]="loading"
+  [isToolBar]="true"
+  [isCreate]="true"
+  [isUploadFile]="true"
+  [isSelected]="true"
+  title="Danh sách lớp học"
+  [searchString]="searchString"
+  [searchText$]="searchText$"
+  [onCreate]="onShowDialogForCreate.bind(this)"
+  [onDeleteCollection]="onDeleteClasses.bind(this)"
+  [customActions]="customActions"
+  (lazyLoad)="onLoadClasses($event)"
+  (selectFile)="onSelect($event)"
+  (uploadFile)="onUpload($event)"
+  [exportItem]="exportItem"
+>
+  <div class="smsedu-toolbar-center flex p-2">
+    <span class="p-float-label">
+      <p-dropdown
+        [options]="schoolYears"
+        [(ngModel)]="selectYear"
+        optionLabel="name"
+        placeholder="Chọn năm học"
+        (onChange)="onChangeYear($event)"
+      />
+      <label for="inputtext">Năm học</label>
+    </span>
+  </div>
+</smsedu-crud>
+
+<smsedu-class-dialog-for-create-update (save)="onSave()" />
+
+<smsedu-class-with-homeroom-teachers-update-dialog
+  (save)="onClear()"
+  [startYear]="selectYear?.startYear"
+  [endYear]="selectYear?.endYear"
+/>
+
+<smsedu-class-diaglog-for-create-collection
+  [excelData]="excelData"
+  (clear)="onClear()"
+/>
